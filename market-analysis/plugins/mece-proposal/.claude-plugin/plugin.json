@@ -1,0 +1,5 @@
+{
+  "name": "mece-proposal",
+  "description": "MECE 5-section phase-1 structure check for market-analysis proposals: decision framed, framework selection + rationale (industry attractiveness / competitive positioning / customer-need fit), evidence plan, adoption rationale, plugin-reflection plan. use_when: writing or revising a market-analysis phase-1 proposal (docs/issue-<n>/proposals/*.md). Independent — the market-analysis methodology has no plugin ordering constraint (unlike pricing's scope-gate → method-family → design-rigor → verdict-report chain); this plugin can run standalone.",
+  "author": { "name": "Jung Jiwon & Lee Jongkwan" }
+}
