@@ -38,7 +38,7 @@ Bottom-up-first evidence gathering (source named + method noted); top-down
 used only for framing/context. `docs/issue-<n>/reports/market-analysis.md` must
 contain:
 
-1. **`five-forces-summary`** — per-force verdict (competitive rivalry, new-entrant threat, supplier/buyer power, substitute threat), each with an evidence citation, not a bare rating.
+1. **`five-forces-summary`** — per-force verdict for all five Porter forces (competitive rivalry, threat of new entrants, supplier bargaining power, buyer bargaining power — two distinct forces, not one merged "supplier/buyer power" line — and threat of substitutes), each with an evidence citation, not a bare rating.
 2. **`competitor-list`** — direct + indirect competitors, each claimed fact backed by an evidence link (pricing page, filing, product doc).
 3. **`jtbd-landscape-verdict`** — the customer job the spec competes to satisfy, and whether the spec's differentiation holds against the strongest competing alternative for that job.
 4. **Evidence appendix** — flat list of every source used across 1–3.
