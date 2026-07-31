@@ -1,0 +1,5 @@
+{
+  "name": "evidence-rigor",
+  "description": "Evidence-traceability gate for market-analysis (issue-1's highest-leverage cross-cutting finding): checks presence of a Sources/evidence-appendix block on write. use_when: writing/revising either a market-analysis phase-1 proposal (docs/issue-<n>/proposals/*.md) or the phase-2 record (docs/issue-<n>/reports/market-analysis.md). The single plugin shared across BOTH phase-1 and phase-2 write surfaces — no other plugin in this rulebook spans both phases. No ordering dependency on other plugins: unlike pricing's scope-gate -> method-family -> design-rigor -> verdict-report chain, market-analysis methodology has no required plugin sequencing (see docs/issue-7/proposals/plugin-decomposition.md §2.3) — this gate inspects its own write independently of any other plugin's state.",
+  "author": { "name": "Jung Jiwon & Lee Jongkwan" }
+}

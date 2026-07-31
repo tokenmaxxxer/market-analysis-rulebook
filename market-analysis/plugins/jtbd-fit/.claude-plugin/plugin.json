@@ -1,0 +1,5 @@
+{
+  "name": "jtbd-fit",
+  "description": "JTBD customer-need-fit verdict phase-2 record-gate. use_when: writing the market-analysis phase-2 record (docs/issue-<n>/reports/market-analysis.md). Requires a jtbd-landscape-verdict section naming the customer job the spec competes to satisfy and stating a differentiation verdict against the strongest competing alternative for that job. No ordering dependency on other plugins — combines independently with five-forces/competitor-mapping/evidence-rigor on the same write surface (market-analysis has no plugin sequencing constraint, unlike pricing's chain — see docs/issue-7/proposals/plugin-decomposition.md §2.3).",
+  "author": { "name": "Jung Jiwon & Lee Jongkwan" }
+}

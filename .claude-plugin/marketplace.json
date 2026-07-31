@@ -8,6 +8,31 @@
       "name": "market-analysis",
       "source": "./market-analysis",
       "description": "The market-analysis role on contract v3 (issue-160 round-3 promotion). Decides: 경쟁 구도에서 이 스펙이 서는가."
+    },
+    {
+      "name": "mece-proposal",
+      "source": "./market-analysis/plugins/mece-proposal",
+      "description": "MECE, recommendation-first phase-1 proposal structure gate (5 required elements: decision framed, frameworks selected+why, evidence plan, adoption rationale, plugin-reflection plan). Phase-1 only; no ordering dependency on the other market-analysis plugins."
+    },
+    {
+      "name": "evidence-rigor",
+      "source": "./market-analysis/plugins/evidence-rigor",
+      "description": "Evidence-traceability gate: every methodological/factual claim carries a source or a labeled assumption. The one plugin shared across both phase-1 (proposals) and phase-2 (record) write surfaces. No ordering dependency on the other market-analysis plugins."
+    },
+    {
+      "name": "five-forces",
+      "source": "./market-analysis/plugins/five-forces",
+      "description": "Porter's Five Forces phase-2 record gate: all 5 distinct forces (supplier and buyer bargaining power kept separate), each evidence-cited. No ordering dependency on the other market-analysis plugins."
+    },
+    {
+      "name": "competitor-mapping",
+      "source": "./market-analysis/plugins/competitor-mapping",
+      "description": "Direct + indirect competitor evidence-linked inventory phase-2 record gate. No ordering dependency on the other market-analysis plugins."
+    },
+    {
+      "name": "jtbd-fit",
+      "source": "./market-analysis/plugins/jtbd-fit",
+      "description": "Jobs-to-be-done customer-need-fit verdict phase-2 record gate: named customer job + differentiation verdict vs. the strongest competing alternative. No ordering dependency on the other market-analysis plugins."
     }
   ]
 }

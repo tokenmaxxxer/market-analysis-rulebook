@@ -1,0 +1,5 @@
+{
+  "name": "five-forces",
+  "description": "Porter's Five Forces phase-2 record-gate for market-analysis: checks presence of a five-forces-summary section naming all 5 distinct Porter forces (competitive rivalry, threat of new entrants, supplier bargaining power, buyer bargaining power kept as two separate mentions — not merged into one 'supplier/buyer power' line — and threat of substitutes), each with a nearby evidence citation. use_when: assembling/revising the market-analysis phase-2 record (docs/issue-<n>/reports/market-analysis.md). No ordering dependency on other plugins: unlike pricing's scope-gate -> method-family -> design-rigor -> verdict-report chain, market-analysis methodology has no required plugin sequencing (see docs/issue-7/proposals/plugin-decomposition.md §2.3) — this gate combines independently with competitor-mapping/jtbd-fit/evidence-rigor on the same write surface, inspecting only its own write.",
+  "author": { "name": "Jung Jiwon & Lee Jongkwan" }
+}
