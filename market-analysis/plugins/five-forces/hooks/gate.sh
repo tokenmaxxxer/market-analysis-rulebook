@@ -27,7 +27,7 @@
 # docs/issue-10/proposals/gate-a-plus-remediation.md §1.
 #
 # Kill switch: export FIVE_FORCES_GATE_OFF=1
-. "${CORE_PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT/../core}/hooks/lib/gate-lib.sh"
+. "${CLAUDE_PLUGIN_ROOT_CORE:-$CLAUDE_PLUGIN_ROOT/../core}/hooks/lib/gate-lib.sh" || { echo "five-forces: cannot source gate-lib.sh" >&2; exit 2; }
 gate_trap_fail_closed
 set -uo pipefail
 gate_kill_switch_active "${FIVE_FORCES_GATE_OFF:-}" || { trap - EXIT; exit 0; }
@@ -172,7 +172,7 @@ try:
 
     # Citation-marker strictness (survey item 4): a bare `[` no longer
     # counts — requires a real link/footnote shape.
-    CITATION_RE = re.compile(r'https?://|source:|citation|cited|\[[^\]]+\]\([^)]+\)|\[\^[^\]]+\]')
+    CITATION_RE = re.compile(r'https?://|source:|\bcitation\b|(?<!un)\bcited\b|\[[^\]]+\]\([^)]+\)|\[\^[^\]]+\]')
     BULLET_RE = re.compile(r'^\s*(?:[-*]\s+|\d+[.)]\s+)(.*)$')
 
     def _leading_line_index(pat):

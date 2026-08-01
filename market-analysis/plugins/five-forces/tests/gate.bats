@@ -255,3 +255,25 @@ print(json.dumps({"tool_name": "Write", "tool_input": {"file_path": sys.argv[1] 
 # docs/issue-10/proposals/gate-a-plus-remediation.md §5 item 6 —
 # gate_bash_write_targets is not adopted by this gate family until a real
 # Bash-write path to these docs is surfaced. No test case for it here.
+
+@test "(v2) a force explicitly marked 'Uncited.' is denied, not accepted via the 'cited' substring" {
+  content='## five-forces-summary
+
+- Competitive rivalry: high. Uncited.
+- Threat of new entrants: low. Source: https://example.com/entrants
+- Supplier bargaining power: moderate. Source: https://example.com/supplier
+- Buyer bargaining power: high. Source: https://example.com/buyer
+- Threat of substitutes: low. Source: https://example.com/substitutes'
+  run_gate "$content"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"competitive rivalry"* ]]
+}
+
+@test "(w) missing core (unresolvable gate-lib.sh) is denied, not silently allowed" {
+  payload='{"tool_name":"Write","tool_input":{"file_path":"docs/issue-7/reports/market-analysis.md","content":"no five forces content here at all"}}'
+  BADROOT="$(mktemp -d)"
+  run env -u CLAUDE_PLUGIN_ROOT_CORE CLAUDE_PLUGIN_ROOT="$BADROOT" bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  rm -rf "$BADROOT"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"cannot source gate-lib.sh"* ]]
+}

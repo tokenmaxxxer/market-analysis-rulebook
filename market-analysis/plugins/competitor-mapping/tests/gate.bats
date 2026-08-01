@@ -61,6 +61,13 @@ teardown() {
   [[ "$output" == *"entry-without-citation"* ]]
 }
 
+@test "(g2) an entry explicitly marked 'Uncited.' is denied, not accepted via the 'cited' substring" {
+  payload='{"tool_name":"Write","tool_input":{"file_path":"docs/issue-7/reports/market-analysis.md","content":"## competitor-list\n### Direct\n- **Acme Corp** — Uncited.\n### Indirect\n- **Widget Inc** — Source: 10-K filing 2025"}}'
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"entry-without-citation"* ]]
+}
+
 @test "(h) Edit with replace_all:true against a multiply-occurring old_string judges the fully-replaced text" {
   printf '## competitor-list\n### Direct\n- **Acme Corp** — PLACEHOLDER\n### Indirect\n- **Widget Inc** — PLACEHOLDER\n' > "$TMP_REPO/docs/issue-7/reports/market-analysis.md"
   payload='{"tool_name":"Edit","tool_input":{"file_path":"docs/issue-7/reports/market-analysis.md","old_string":"PLACEHOLDER","new_string":"Source: https://example.com/x","replace_all":true}}'
@@ -134,3 +141,12 @@ print(json.dumps({"tool_name": "Write", "tool_input": {"file_path": sys.argv[1],
 # docs/issue-10/proposals/gate-a-plus-remediation.md §5 item 6 — no
 # gate_bash_write_targets adoption call surfaced by this phase's
 # compliance-check.sh pass, so this repo does not add a Bash-tool test yet.
+
+@test "(n) missing core (unresolvable gate-lib.sh) is denied, not silently allowed" {
+  payload='{"tool_name":"Write","tool_input":{"file_path":"docs/issue-7/reports/market-analysis.md","content":"## competitor-list\n### Direct\n- **Acme Corp** — pricing at https://acme.example/pricing\n### Indirect\n- **Widget Inc** — Source: 10-K filing 2025"}}'
+  BADROOT="$(mktemp -d)"
+  run env -u CLAUDE_PLUGIN_ROOT_CORE CLAUDE_PLUGIN_ROOT="$BADROOT" bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  rm -rf "$BADROOT"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"cannot source gate-lib.sh"* ]]
+}

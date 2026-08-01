@@ -26,7 +26,7 @@
 # same proposal.
 #
 # Kill switch: export MECE_PROPOSAL_GATE_OFF=1
-. "${CORE_PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT/../core}/hooks/lib/gate-lib.sh"
+. "${CLAUDE_PLUGIN_ROOT_CORE:-$CLAUDE_PLUGIN_ROOT/../core}/hooks/lib/gate-lib.sh" || { echo "mece-proposal: cannot source gate-lib.sh" >&2; exit 2; }
 gate_trap_fail_closed
 set -uo pipefail
 gate_kill_switch_active "${MECE_PROPOSAL_GATE_OFF:-}" || { trap - EXIT; exit 0; }

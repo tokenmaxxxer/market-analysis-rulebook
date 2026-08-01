@@ -8,7 +8,7 @@ competitor inventory, each claimed fact backed by an evidence link
 
 ## Write surface
 
-`PreToolUse` on `Write|Edit|MultiEdit` targeting
+`PreToolUse` on `Write|Edit|MultiEdit|NotebookEdit` targeting
 `docs/issue-<n>/reports/market-analysis.md` (the phase-2 record file only —
 NOT phase-1 proposals under `docs/issue-<n>/proposals/`). Any other path is
 allowed unconditionally.
