@@ -2,7 +2,7 @@
 
 Enforces market-analysis's highest-leverage cross-cutting norm from issue-1:
 every methodological/factual claim must carry a source, or be explicitly
-labeled an assumption. A `PreToolUse` gate on `Write|Edit|MultiEdit` checks
+labeled an assumption. A `PreToolUse` gate on `Write|Edit|MultiEdit|NotebookEdit` checks
 that the resulting document content contains an evidence block before the
 write is allowed to land.
 

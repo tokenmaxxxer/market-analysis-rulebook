@@ -21,7 +21,7 @@
 # same proposal.
 #
 # Kill switch: export COMPETITOR_MAPPING_GATE_OFF=1
-. "${CORE_PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT/../core}/hooks/lib/gate-lib.sh"
+. "${CLAUDE_PLUGIN_ROOT_CORE:-$CLAUDE_PLUGIN_ROOT/../core}/hooks/lib/gate-lib.sh" || { echo "competitor-mapping: cannot source gate-lib.sh" >&2; exit 2; }
 gate_trap_fail_closed
 set -uo pipefail
 gate_kill_switch_active "${COMPETITOR_MAPPING_GATE_OFF:-}" || { trap - EXIT; exit 0; }
@@ -169,7 +169,7 @@ try:
     # immediately followed by a line carrying) a citation marker. Citation-marker
     # strictness (survey item 4): a bare `[` no longer counts — requires a real
     # link/footnote shape.
-    citation_re = re.compile(r'https?://|source:|citation|cited|\[[^\]]+\]\([^)]+\)|\[\^[^\]]+\]')
+    citation_re = re.compile(r'https?://|source:|\bcitation\b|(?<!un)\bcited\b|\[[^\]]+\]\([^)]+\)|\[\^[^\]]+\]')
     entry_re = re.compile(r'^\s*[-*]\s+\S|^\s*\*\*[^*]+\*\*')
 
     entry_without_citation = False

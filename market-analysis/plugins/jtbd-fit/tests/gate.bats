@@ -114,3 +114,12 @@ print(json.dumps({"tool_name": "Write", "tool_input": {"file_path": sys.argv[1],
 # docs/issue-10/proposals/gate-a-plus-remediation.md §5 item 6 — no
 # gate_bash_write_targets adoption call surfaced by this phase's
 # compliance-check.sh pass, so this repo does not add a Bash-tool test yet.
+
+@test "(l) missing core (unresolvable gate-lib.sh) is denied, not silently allowed" {
+  payload='{"tool_name":"Write","tool_input":{"file_path":"docs/issue-7/reports/market-analysis.md","content":"## jtbd-landscape-verdict\nCustomer job: JTBD: schedule a meeting fast. Verdict: differentiation holds vs. the strongest competing alternative."}}'
+  BADROOT="$(mktemp -d)"
+  run env -u CLAUDE_PLUGIN_ROOT_CORE CLAUDE_PLUGIN_ROOT="$BADROOT" bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  rm -rf "$BADROOT"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"cannot source gate-lib.sh"* ]]
+}

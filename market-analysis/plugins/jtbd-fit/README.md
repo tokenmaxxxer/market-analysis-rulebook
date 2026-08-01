@@ -8,7 +8,7 @@ the strongest competing alternative for that job.
 
 ## Write surface
 
-`PreToolUse` on `Write|Edit|MultiEdit` targeting
+`PreToolUse` on `Write|Edit|MultiEdit|NotebookEdit` targeting
 `docs/issue-<n>/reports/market-analysis.md` (the phase-2 record file only —
 not proposals). Non-matching paths always pass.
 
