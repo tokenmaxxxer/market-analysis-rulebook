@@ -19,14 +19,42 @@ claude plugin install market-analysis
 
 ## Layout
 
-- `market-analysis/.claude-plugin/plugin.json` — plugin manifest
-- `market-analysis/hooks/hooks.json` — SessionStart + PreToolUse wiring
+- `market-analysis/.claude-plugin/plugin.json` — root plugin manifest
+- `market-analysis/hooks/hooks.json` — SessionStart wiring (role directive only)
 - `market-analysis/hooks/directive.sh` — SessionStart role directive
-- `market-analysis/hooks/record-fields-gate.sh` — this role's record required-field gate
-- `market-analysis/hooks/trailer-gate.sh` — commit `Subject: issue-<n>` trailer gate
-- `market-analysis/hooks/handbook-trigger-gate.sh` — s21 handbook-sync gate
-- `market-analysis/agents/warrant-hunter.md` — rotating-stance hunt agent
+- `market-analysis/plugins/lib/section-extract.py` — shared in-repo helper
+  (heading-bounded section slice + distinct-bullet-mention check) used by
+  the five plugin gates below; not core canon.
+- `market-analysis/plugins/<name>/` — one directory per PreToolUse gate
+  plugin: `five-forces`, `evidence-rigor`, `competitor-mapping`,
+  `jtbd-fit`, `mece-proposal`. Each contains:
+  - `.claude-plugin/plugin.json` — plugin manifest
+  - `hooks/hooks.json` — PreToolUse wiring
+  - `hooks/directive.sh` — plugin-scoped directive
+  - `hooks/gate.sh` — the PreToolUse gate itself; sources core's
+    `gate-lib.sh`/loads `gate-lib.py` (issue-72 gate-house standard,
+    referenced never vendored — see
+    `docs/issue-10/proposals/gate-a-plus-remediation.md`) for the shared
+    fail-closed-trap / kill-switch / path-normalize / Write-Edit-MultiEdit-
+    NotebookEdit reconstruction machinery, and its own domain-specific
+    semantic check on top.
+  - `tests/gate.bats` — that gate's test suite.
 - `docs/specs/approvers.md` — Approve-authority allowlist (see below)
+
+### Kill switches
+
+Each gate has its own kill switch env var. Per `gate_kill_switch_active`,
+only a recognized on-spelling (`1`/`true`/`yes`/`on`, case-insensitive)
+disables the gate — empty, a recognized off-spelling, or any unrecognized
+value all leave the gate **active**.
+
+| Plugin | Kill switch |
+| --- | --- |
+| five-forces | `FIVE_FORCES_GATE_OFF` |
+| evidence-rigor | `EVIDENCE_RIGOR_GATE_OFF` |
+| competitor-mapping | `COMPETITOR_MAPPING_GATE_OFF` |
+| jtbd-fit | `JTBD_FIT_GATE_OFF` |
+| mece-proposal | `MECE_PROPOSAL_GATE_OFF` |
 
 This is scaffolding, not a finished rulebook: fill in doctrine detail,
 handoff enforcement, and any role-specific progress gate before treating

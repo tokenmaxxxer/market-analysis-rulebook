@@ -50,3 +50,90 @@ teardown() {
   run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
   [ "$status" -eq 0 ]
 }
+
+@test "(f) 'Resources: none listed' does NOT satisfy the sources check" {
+  payload='{"tool_name":"Write","tool_input":{"file_path":"docs/issue-7/proposals/plan.md","content":"# Proposal\n\nResources: none listed.\n\nSome claim with no real sources block."}}'
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(g) Edit with replace_all:true against a multiply-occurring old_string judges the fully-replaced text" {
+  printf '# Proposal\n\nfoo\n\nfoo\n\n## Sources\n\n- x\n' > "$TMP_REPO/docs/issue-7/proposals/plan.md"
+  payload=$(python3 -c '
+import json
+print(json.dumps({
+    "tool_name": "Edit",
+    "tool_input": {
+        "file_path": "docs/issue-7/proposals/plan.md",
+        "old_string": "## Sources",
+        "new_string": "## Resources",
+        "replace_all": True,
+    },
+}))
+')
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(h) MultiEdit with mixed replace_all true/false edits judges the fully-applied text" {
+  printf '# Proposal\n\nfoo\n\n## Sources\n\n- x\n' > "$TMP_REPO/docs/issue-7/proposals/plan.md"
+  payload=$(python3 -c '
+import json
+print(json.dumps({
+    "tool_name": "MultiEdit",
+    "tool_input": {
+        "file_path": "docs/issue-7/proposals/plan.md",
+        "edits": [
+            {"old_string": "foo", "new_string": "bar", "replace_all": False},
+            {"old_string": "## Sources", "new_string": "## Resources", "replace_all": True},
+        ],
+    },
+}))
+')
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(i1) malformed JSON: truncated payload is denied" {
+  run bash -c "printf '%s' '{\"tool_name\":\"Write\"' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(i2) malformed JSON: non-object top level is denied" {
+  run bash -c "printf '%s' '\"just a string\"' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(i3) malformed JSON: empty payload is denied" {
+  run bash -c "printf '' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(j) kill switch set to an unrecognized value stays ACTIVE (still denies)" {
+  payload='{"tool_name":"Write","tool_input":{"file_path":"docs/issue-7/proposals/plan.md","content":"# Proposal\n\nno sources here"}}'
+  EVIDENCE_RIGOR_GATE_OFF=maybe run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(k1) absolute file_path reaching the same target as the relative fixture is judged the same" {
+  payload=$(python3 -c '
+import json, sys
+print(json.dumps({
+    "tool_name": "Write",
+    "tool_input": {"file_path": sys.argv[1] + "/docs/issue-7/proposals/plan.md", "content": "# Proposal\n\nno sources"},
+}))
+' "$TMP_REPO")
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(k2) ./-prefixed relative file_path reaching the same target is judged the same" {
+  payload='{"tool_name":"Write","tool_input":{"file_path":"./docs/issue-7/proposals/plan.md","content":"# Proposal\n\nno sources"}}'
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+# (l) Bash-tool write case: deferred per
+# docs/issue-10/proposals/gate-a-plus-remediation.md §5 item 6 — no
+# gate_bash_write_targets adoption call surfaced by this phase's
+# compliance-check.sh pass, so this repo does not add a Bash-tool test yet.

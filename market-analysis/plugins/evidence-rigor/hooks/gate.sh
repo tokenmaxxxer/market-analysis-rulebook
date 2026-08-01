@@ -1,28 +1,31 @@
 #!/usr/bin/env bash
-__fc(){ rc=$?; if [ "$rc" != 0 ] && [ "$rc" != 2 ]; then echo "fail-closed: gate aborted (rc=$rc)" >&2; exit 2; fi; }
-trap __fc EXIT
-# PreToolUse gate (Write|Edit|MultiEdit) — evidence-rigor plugin.
+# PreToolUse gate (Write|Edit|MultiEdit|NotebookEdit) — evidence-rigor plugin.
 #
 # Targets: docs/issue-<n>/proposals/*.md (phase-1 proposals) and
 # docs/issue-<n>/reports/market-analysis.md (phase-2 record) — the two
 # write surfaces this plugin shares across both phases (see
 # docs/issue-7/proposals/plugin-decomposition.md §2.1/§2.2).
 #
-# Requires the resulting content contain an evidence/sources block:
-# a "Sources" heading/line (phase-1 style) OR an "evidence appendix"
-# heading (phase-2 style). Presence-only check — cannot verify citation
-# correctness or sufficiency (accepted limitation, see proposal §4.2).
+# Requires the resulting content contain an evidence/sources block: an
+# actual `## Sources` / `Sources:` heading LINE (phase-1 proposal style —
+# no longer a whole-document substring match, which previously let
+# "Resources: none listed" false-accept, survey/proposal §3) OR an
+# "evidence appendix" heading (phase-2 record style). Presence-only check
+# — cannot verify citation correctness or sufficiency (accepted
+# limitation, see docs/issue-7/proposals/plugin-decomposition.md §4.2).
 # Fails closed when absent.
 #
+# Trap/kill-switch/path-normalize/reconstruct come from core's gate-house
+# standard (issue-72), referenced by path, never vendored — see
+# docs/issue-10/proposals/gate-a-plus-remediation.md §1.
+#
 # Kill switch: export EVIDENCE_RIGOR_GATE_OFF=1
+. "${CORE_PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT/../core}/hooks/lib/gate-lib.sh"
+gate_trap_fail_closed
 set -uo pipefail
+gate_kill_switch_active "${EVIDENCE_RIGOR_GATE_OFF:-}" || { trap - EXIT; exit 0; }
 
 deny() { printf "evidence-rigor: refused — %s\n" "$1" >&2; exit 2; }
-
-case "${EVIDENCE_RIGOR_GATE_OFF:-}" in
-  ""|0|false|no|off) ;;
-  *) exit 0 ;;
-esac
 
 command -v python3 >/dev/null 2>&1 || deny "gate.sh requires python3, which is not on PATH; denying rather than guessing."
 
@@ -56,7 +59,7 @@ sys.exit(0 if (real==rr or real.startswith(rr+"/")) else 1)
 
 root=""
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && _plausible "$CLAUDE_PROJECT_DIR" && _under "$CLAUDE_PROJECT_DIR" "$_target"; then
-  root="$(cd "$CLAUDE_PROJECT_DIR" 2>/dev/null && pwd -P)"
+  root="$(cd "$CLAUDE_PROJECT_DIR" 2>/dev/null && pwd)"
 fi
 if [ -z "$root" ]; then
   d="$_target"; [ -n "$d" ] || d="$(pwd -P)"; [ -d "$d" ] || d="$(dirname "$d")"
@@ -69,18 +72,16 @@ PG_PAYLOAD="$payload" PG_ROOT="$root" \
 python3 <<'PY'
 import sys as _fc_sys  # fail-closed-on-internal-error
 try:
-    import json, os, posixpath, re, sys
+    import importlib.util, json, os, posixpath, re, sys
 
     def deny(m):
         sys.stderr.write("evidence-rigor: refused — %s\n" % m); sys.exit(2)
 
+    _gl_spec = importlib.util.spec_from_file_location("gate_lib", os.environ["GATE_LIB_PY"])
+    gate_lib = importlib.util.module_from_spec(_gl_spec); _gl_spec.loader.exec_module(gate_lib)
+
     raw = os.environ.get("PG_PAYLOAD", "")
-    try:
-        ev = json.loads(raw) if raw else {}
-    except ValueError:
-        deny("the tool-call payload is not valid JSON; the gate cannot judge evidence-rigor fields on an unparseable write.")
-    if not isinstance(ev, dict):
-        deny("the tool-call payload is not a JSON object; failing closed on evidence-rigor.")
+    ev = gate_lib.gate_parse_json_or_deny(raw, deny)
 
     tool = ev.get("tool_name")
     ti = ev.get("tool_input")
@@ -91,27 +92,21 @@ try:
     PROPOSAL_RE = re.compile(r'^docs/issue-([0-9]+)/proposals/.*\.md$')
     RECORD_RE = re.compile(r'^docs/issue-([0-9]+)/reports/market-analysis\.md$')
 
-    def resolve(p):
-        n = p.replace("\\", "/")
-        a = n if posixpath.isabs(n) else posixpath.join(root, n)
-        a = posixpath.normpath(a)
-        try:
-            return posixpath.normpath(os.path.realpath(a).replace("\\", "/"))
-        except OSError:
-            return a
-
     path = None
     if tool in ("Write", "Edit", "MultiEdit"):
         p = ti.get("file_path")
         if isinstance(p, str) and p:
             path = p
+    elif tool == "NotebookEdit":
+        p = ti.get("notebook_path")
+        if isinstance(p, str) and p:
+            path = p
     if path is None:
         sys.exit(0)
 
-    r = resolve(path)
-    if not r.startswith(root + "/"):
+    rel = gate_lib.gate_normalize_path(root, path)
+    if rel is None:
         sys.exit(0)
-    rel = r[len(root):].lstrip("/")
 
     m_proposal = PROPOSAL_RE.match(rel)
     m_record = RECORD_RE.match(rel)
@@ -119,58 +114,44 @@ try:
         sys.exit(0)  # not an evidence-rigor write surface — not this gate's business
     surface = "proposal" if m_proposal else "record"
 
+    abs_path = posixpath.join(root, rel) if rel else root
     current = None
-    if os.path.isfile(r):
+    if os.path.isfile(abs_path):
         try:
-            with open(r, encoding="utf-8-sig") as fh:
+            with open(abs_path, encoding="utf-8-sig") as fh:
                 current = fh.read(1 << 20)
         except OSError:
             deny("%s exists but cannot be read; failing closed on evidence-rigor." % rel)
 
-    new_text = None
-    if tool == "Write":
-        c = ti.get("content")
-        if isinstance(c, str):
-            new_text = c
-    elif tool == "Edit":
-        o, n = ti.get("old_string"), ti.get("new_string")
-        if isinstance(o, str) and isinstance(n, str) and current is not None and o in current:
-            new_text = current.replace(o, n, 1)
-    elif tool == "MultiEdit":
-        edits = ti.get("edits")
-        text = current
-        if isinstance(edits, list) and text is not None:
-            ok = True
-            for e in edits:
-                if not isinstance(e, dict):
-                    ok = False; break
-                o, n = e.get("old_string"), e.get("new_string")
-                if not isinstance(o, str) or not isinstance(n, str) or o not in text:
-                    ok = False; break
-                text = text.replace(o, n, 1)
-            if ok:
-                new_text = text
-
-    if new_text is None:
+    new_text, ok = gate_lib.gate_reconstruct_write(tool, ti, current)
+    if not ok:
         deny(
             "this write targets %s but the gate cannot determine the resulting content "
             "from the tool input (tool=%r). Write the full document with Write, or use an "
-            "Edit/MultiEdit whose old_string matches, so the evidence-rigor result can be "
-            "checked." % (rel, tool)
+            "Edit/MultiEdit whose old_string matches (honoring replace_all), so the "
+            "evidence-rigor result can be checked." % (rel, tool)
         )
 
+    lines = new_text.splitlines()
     low = new_text.lower()
 
-    def has_any(*needles):
-        return any(nd in low for nd in needles)
+    # A real Sources heading line — "## Sources" (any heading level) or a
+    # bare "Sources:" label line — not any substring occurrence anywhere in
+    # the document. Closes the "Resources: none listed" false-accept
+    # (survey/proposal §3): that line is neither a "sources" heading nor an
+    # exact "Sources:" label, so it no longer satisfies this check.
+    SOURCES_HEADING_RE = re.compile(r'^\s{0,3}#{1,6}\s*sources\b', re.IGNORECASE)
+    SOURCES_LABEL_RE = re.compile(r'^\s*sources\s*:\s*$', re.IGNORECASE)
+    has_sources_heading = any(
+        SOURCES_HEADING_RE.match(ln) or SOURCES_LABEL_RE.match(ln) for ln in lines
+    )
+    has_evidence_appendix = "evidence appendix" in low
 
-    ok = has_any("sources:", "sources\n", "## sources", "# sources", "evidence appendix")
-
-    if not ok:
+    if not (has_sources_heading or has_evidence_appendix):
         deny(
-            "%s at %s must carry an evidence block — a `Sources:` list (phase-1 proposal "
-            "style) or an `Evidence appendix` heading (phase-2 record style) covering the "
-            "claims used. None was found." % (surface, rel)
+            "%s at %s must carry an evidence block — an actual `## Sources` / `Sources:` "
+            "heading line (phase-1 proposal style) or an `Evidence appendix` heading "
+            "(phase-2 record style) covering the claims used. None was found." % (surface, rel)
         )
 
     sys.exit(0)
