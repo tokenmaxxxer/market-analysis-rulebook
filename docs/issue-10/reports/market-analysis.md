@@ -151,17 +151,24 @@ source/load lines resolve the same way they will against a real
 marketplace-installed sibling `core` plugin:
 
 ```
-$ CORE_PLUGIN_ROOT=<scratch>/core-sibling/core bats \
-    market-analysis/plugins/five-forces/tests/gate.bats \
-    market-analysis/plugins/evidence-rigor/tests/gate.bats \
-    market-analysis/plugins/competitor-mapping/tests/gate.bats \
-    market-analysis/plugins/jtbd-fit/tests/gate.bats \
-    market-analysis/plugins/mece-proposal/tests/gate.bats
-1..78
-ok 1..78
+$ CORE_PLUGIN_ROOT=<scratch>/core-sibling/core bats market-analysis/plugins/five-forces/tests/gate.bats
+1..20
+(20/20 ok)
+$ CORE_PLUGIN_ROOT=<scratch>/core-sibling/core bats market-analysis/plugins/evidence-rigor/tests/gate.bats
+1..14
+(14/14 ok)
+$ CORE_PLUGIN_ROOT=<scratch>/core-sibling/core bats market-analysis/plugins/competitor-mapping/tests/gate.bats
+1..16
+(16/16 ok)
+$ CORE_PLUGIN_ROOT=<scratch>/core-sibling/core bats market-analysis/plugins/jtbd-fit/tests/gate.bats
+1..13
+(13/13 ok)
+$ CORE_PLUGIN_ROOT=<scratch>/core-sibling/core bats market-analysis/plugins/mece-proposal/tests/gate.bats
+1..15
+(15/15 ok)
 ```
 
-78 tests total, all passing (20 five-forces, 14 evidence-rigor, 30
+78 tests total, all passing (20 five-forces, 14 evidence-rigor, 16
 competitor-mapping, 13 jtbd-fit, 15 mece-proposal — see each `tests/gate.bats`
 for the itemized list, tags (a)-onward). One test-fixture bug was found
 and fixed during this verification pass, not a gate-code bug:
