@@ -145,3 +145,113 @@ Threat of substitutes: low. Source: https://example.com/substitutes'
   run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
   [ "$status" -eq 0 ]
 }
+
+# --- mandatory case groups (issue-10 gate A+ remediation, role-gates-tests.md) ---
+
+@test "(p) bare [TODO] with no following (url) does not count as a citation" {
+  content='## five-forces-summary
+
+- Competitive rivalry: high. [TODO]
+- Threat of new entrants: low. Source: https://example.com/entrants
+- Supplier bargaining power: moderate. Source: https://example.com/supplier
+- Buyer bargaining power: high. Source: https://example.com/buyer
+- Threat of substitutes: low. Source: https://example.com/substitutes'
+  run_gate "$content"
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"competitive rivalry"* ]]
+}
+
+@test "(q) Edit with replace_all:true honors every occurrence" {
+  printf '%s' '## five-forces-summary
+
+- Competitive rivalry: high. PLACEHOLDER
+- Threat of new entrants: low. Source: https://example.com/entrants
+- Supplier bargaining power: moderate. Source: https://example.com/supplier
+- Buyer bargaining power: high. Source: https://example.com/buyer
+- Threat of substitutes: low. PLACEHOLDER
+' > "$TMP_REPO/docs/issue-7/reports/market-analysis.md"
+  payload='{"tool_name":"Edit","tool_input":{"file_path":"docs/issue-7/reports/market-analysis.md","old_string":"PLACEHOLDER","new_string":"Source: https://example.com/x","replace_all":true}}'
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 0 ]
+}
+
+@test "(q2) the same Edit without replace_all leaves the second PLACEHOLDER uncited and is denied" {
+  printf '%s' '## five-forces-summary
+
+- Competitive rivalry: high. PLACEHOLDER
+- Threat of new entrants: low. Source: https://example.com/entrants
+- Supplier bargaining power: moderate. Source: https://example.com/supplier
+- Buyer bargaining power: high. Source: https://example.com/buyer
+- Threat of substitutes: low. PLACEHOLDER
+' > "$TMP_REPO/docs/issue-7/reports/market-analysis.md"
+  payload='{"tool_name":"Edit","tool_input":{"file_path":"docs/issue-7/reports/market-analysis.md","old_string":"PLACEHOLDER","new_string":"Source: https://example.com/x"}}'
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(r) MultiEdit with mixed replace_all true/false edits judges the fully-applied text" {
+  printf '%s' '## five-forces-summary
+
+- Competitive rivalry: high. OLDHEADING
+- Threat of new entrants: low. Source: https://example.com/entrants
+- Supplier bargaining power: moderate. Source: https://example.com/supplier
+- Buyer bargaining power: high. Source: https://example.com/buyer
+- Threat of substitutes: low. PLACEHOLDER
+' > "$TMP_REPO/docs/issue-7/reports/market-analysis.md"
+  payload=$(python3 -c '
+import json
+print(json.dumps({
+    "tool_name": "MultiEdit",
+    "tool_input": {
+        "file_path": "docs/issue-7/reports/market-analysis.md",
+        "edits": [
+            {"old_string": "OLDHEADING", "new_string": "Source: https://example.com/rivalry", "replace_all": False},
+            {"old_string": "PLACEHOLDER", "new_string": "Source: https://example.com/x", "replace_all": True},
+        ],
+    },
+}))
+')
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 0 ]
+}
+
+@test "(s1) malformed JSON: truncated payload is denied" {
+  run bash -c "printf '%s' '{\"tool_name\":\"Write\",\"tool_in' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(s2) malformed JSON: non-object top level is denied" {
+  run bash -c "printf '%s' '[1,2,3]' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(s3) malformed JSON: empty payload is denied" {
+  run bash -c "printf '' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(t) kill switch set to an unrecognized value stays ACTIVE (still denies)" {
+  payload='{"tool_name":"Write","tool_input":{"file_path":"docs/issue-7/reports/market-analysis.md","content":"no five forces content here at all"}}'
+  FIVE_FORCES_GATE_OFF=maybe run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(u1) absolute file_path reaching the same target as the relative fixture is judged the same" {
+  payload=$(python3 -c '
+import json, sys
+print(json.dumps({"tool_name": "Write", "tool_input": {"file_path": sys.argv[1] + "/docs/issue-7/reports/market-analysis.md", "content": "no five forces content"}}))
+' "$TMP_REPO")
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+@test "(u2) ./-prefixed relative file_path reaching the same target is judged the same" {
+  payload='{"tool_name":"Write","tool_input":{"file_path":"./docs/issue-7/reports/market-analysis.md","content":"no five forces content"}}'
+  run bash -c "printf '%s' '$payload' | \"$BATS_TEST_DIRNAME/../hooks/gate.sh\""
+  [ "$status" -eq 2 ]
+}
+
+# (v) Bash-tool write case: deferred per
+# docs/issue-10/proposals/gate-a-plus-remediation.md §5 item 6 —
+# gate_bash_write_targets is not adopted by this gate family until a real
+# Bash-write path to these docs is surfaced. No test case for it here.

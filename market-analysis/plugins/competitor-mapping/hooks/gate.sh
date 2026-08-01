@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-__fc(){ rc=$?; if [ "$rc" != 0 ] && [ "$rc" != 2 ]; then echo "fail-closed: gate aborted (rc=$rc)" >&2; exit 2; fi; }
-trap __fc EXIT
-# PreToolUse gate (Write|Edit|MultiEdit) — competitor-mapping plugin.
+# PreToolUse gate (Write|Edit|MultiEdit|NotebookEdit) — competitor-mapping plugin.
 #
 # Target: docs/issue-<n>/reports/market-analysis.md (the phase-2 record file
 # only, NOT proposals). Requires a `competitor-list` section naming at
@@ -12,15 +10,23 @@ trap __fc EXIT
 # row. Combines independently with five-forces/jtbd-fit/evidence-rigor on
 # the same write surface — no ordering dependency (§2.3).
 #
+# This gate's heading-bounded section slice was this repo's own best
+# existing technique (current-state-survey.md §2); it has been lifted out
+# verbatim into the shared `market-analysis/plugins/lib/section-extract.py`
+# helper (`extract_section`), which this gate now calls instead of keeping
+# a private copy — see docs/issue-10/proposals/gate-a-plus-remediation.md §2/§3.
+#
+# Trap/kill-switch/path-normalize/reconstruct come from core's gate-house
+# standard (issue-72), referenced by path, never vendored — §1 of the
+# same proposal.
+#
 # Kill switch: export COMPETITOR_MAPPING_GATE_OFF=1
+. "${CORE_PLUGIN_ROOT:-$CLAUDE_PLUGIN_ROOT/../core}/hooks/lib/gate-lib.sh"
+gate_trap_fail_closed
 set -uo pipefail
+gate_kill_switch_active "${COMPETITOR_MAPPING_GATE_OFF:-}" || { trap - EXIT; exit 0; }
 
 deny() { echo "competitor-mapping: refused — $1" >&2; exit 2; }
-
-case "${COMPETITOR_MAPPING_GATE_OFF:-}" in
-  ""|0|false|no|off) ;;
-  *) exit 0 ;;
-esac
 
 command -v python3 >/dev/null 2>&1 || deny "gate.sh requires python3, which is not on PATH; denying rather than guessing."
 
@@ -54,7 +60,7 @@ sys.exit(0 if (real==rr or real.startswith(rr+"/")) else 1)
 
 root=""
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ] && _plausible "$CLAUDE_PROJECT_DIR" && _under "$CLAUDE_PROJECT_DIR" "$_target"; then
-  root="$(cd "$CLAUDE_PROJECT_DIR" 2>/dev/null && pwd -P)"
+  root="$(cd "$CLAUDE_PROJECT_DIR" 2>/dev/null && pwd)"
 fi
 if [ -z "$root" ]; then
   d="$_target"; [ -n "$d" ] || d="$(pwd -P)"; [ -d "$d" ] || d="$(dirname "$d")"
@@ -63,22 +69,25 @@ fi
 [ -z "$root" ] && root="$(git -C "$(pwd -P)" rev-parse --show-toplevel 2>/dev/null || true)"
 [ -z "$root" ] && deny "no project root could be determined; failing closed (competitor-mapping check cannot run)."
 
-PG_PAYLOAD="$payload" PG_ROOT="$root" \
+SECTION_EXTRACT_PY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../lib" 2>/dev/null && pwd -P)/section-extract.py"
+
+PG_PAYLOAD="$payload" PG_ROOT="$root" SECTION_EXTRACT_PY="$SECTION_EXTRACT_PY" \
 python3 <<'PY'
 import sys as _fc_sys  # fail-closed-on-internal-error
 try:
-    import json, os, posixpath, re, sys
+    import importlib.util, json, os, posixpath, re, sys
 
     def deny(m):
         sys.stderr.write("competitor-mapping: refused — %s\n" % m); sys.exit(2)
 
+    _gl_spec = importlib.util.spec_from_file_location("gate_lib", os.environ["GATE_LIB_PY"])
+    gate_lib = importlib.util.module_from_spec(_gl_spec); _gl_spec.loader.exec_module(gate_lib)
+
+    _se_spec = importlib.util.spec_from_file_location("section_extract", os.environ["SECTION_EXTRACT_PY"])
+    section_extract = importlib.util.module_from_spec(_se_spec); _se_spec.loader.exec_module(section_extract)
+
     raw = os.environ.get("PG_PAYLOAD", "")
-    try:
-        ev = json.loads(raw) if raw else {}
-    except ValueError:
-        deny("the tool-call payload is not valid JSON; the gate cannot judge the competitor-list section on an unparseable write.")
-    if not isinstance(ev, dict):
-        deny("the tool-call payload is not a JSON object; failing closed on competitor-mapping check.")
+    ev = gate_lib.gate_parse_json_or_deny(raw, deny)
 
     tool = ev.get("tool_name")
     ti = ev.get("tool_input")
@@ -88,81 +97,46 @@ try:
     root = posixpath.normpath(os.environ["PG_ROOT"].replace("\\", "/"))
     RECORD_RE = re.compile(r'^docs/issue-[0-9]+/reports/market-analysis\.md$')
 
-    def resolve(p):
-        n = p.replace("\\", "/")
-        a = n if posixpath.isabs(n) else posixpath.join(root, n)
-        a = posixpath.normpath(a)
-        try:
-            return posixpath.normpath(os.path.realpath(a).replace("\\", "/"))
-        except OSError:
-            return a
-
     path = None
     if tool in ("Write", "Edit", "MultiEdit"):
         p = ti.get("file_path")
         if isinstance(p, str) and p:
             path = p
+    elif tool == "NotebookEdit":
+        p = ti.get("notebook_path")
+        if isinstance(p, str) and p:
+            path = p
     if path is None:
         sys.exit(0)
 
-    r = resolve(path)
-    if not r.startswith(root + "/"):
+    rel = gate_lib.gate_normalize_path(root, path)
+    if rel is None:
         sys.exit(0)
-    rel = r[len(root):].lstrip("/")
     if not RECORD_RE.match(rel):
         sys.exit(0)  # not the market-analysis phase-2 record write surface — not this gate's business
 
+    abs_path = posixpath.join(root, rel) if rel else root
     current = None
-    if os.path.isfile(r):
+    if os.path.isfile(abs_path):
         try:
-            with open(r, encoding="utf-8-sig") as fh:
+            with open(abs_path, encoding="utf-8-sig") as fh:
                 current = fh.read(1 << 20)
         except OSError:
             deny("%s exists but cannot be read; failing closed on competitor-mapping check." % rel)
 
-    new_text = None
-    if tool == "Write":
-        c = ti.get("content")
-        if isinstance(c, str):
-            new_text = c
-    elif tool == "Edit":
-        o, n_ = ti.get("old_string"), ti.get("new_string")
-        if isinstance(o, str) and isinstance(n_, str) and current is not None and o in current:
-            new_text = current.replace(o, n_, 1)
-    elif tool == "MultiEdit":
-        edits = ti.get("edits")
-        text = current
-        if isinstance(edits, list) and text is not None:
-            ok = True
-            for e in edits:
-                if not isinstance(e, dict):
-                    ok = False; break
-                o, n_ = e.get("old_string"), e.get("new_string")
-                if not isinstance(o, str) or not isinstance(n_, str) or o not in text:
-                    ok = False; break
-                text = text.replace(o, n_, 1)
-            if ok:
-                new_text = text
-
-    if new_text is None:
+    new_text, ok = gate_lib.gate_reconstruct_write(tool, ti, current)
+    if not ok:
         deny(
             "this write targets %s but the gate cannot determine the resulting content "
             "from the tool input (tool=%r). Write the full document with Write, or use an "
-            "Edit/MultiEdit whose old_string matches, so the competitor-list section can be "
-            "checked." % (rel, tool)
+            "Edit/MultiEdit whose old_string matches (honoring replace_all), so the "
+            "competitor-list section can be checked." % (rel, tool)
         )
 
     lines = new_text.splitlines()
-    low_lines = [ln.lower() for ln in lines]
 
-    # (1) locate the competitor-list section marker
-    section_re = re.compile(r'competitor[\s\-]?list')
-    section_start = None
-    for i, ln in enumerate(low_lines):
-        if section_re.search(ln):
-            section_start = i
-            break
-    if section_start is None:
+    section_lines, section_start, _end = section_extract.extract_section(lines, r'competitor[\s\-]?list')
+    if section_lines is None:
         deny(
             "competitor-mapping write is missing a `competitor-list` section. Per "
             "docs/handbooks/market-analysis-norms.md (b).2, the phase-2 record must contain "
@@ -170,25 +144,11 @@ try:
             "evidence-linked. (missing-section)"
         )
 
-    # section body: from the marker line to the next heading of the SAME or
-    # SHALLOWER level (or EOF) — deeper subheadings like "### Direct" /
-    # "### Indirect" are part of this section's body, not its terminator.
-    section_heading_m = re.match(r'^\s{0,3}(#{1,6})\s', lines[section_start])
-    section_level = len(section_heading_m.group(1)) if section_heading_m else 6
-    section_end = len(lines)
-    heading_re = re.compile(r'^\s{0,3}(#{1,6})\s')
-    for i in range(section_start + 1, len(lines)):
-        m = heading_re.match(lines[i])
-        if m and len(m.group(1)) <= section_level:
-            section_end = i
-            break
-    section_lines = lines[section_start:section_end]
     section_low = [ln.lower() for ln in section_lines]
-    section_text_low = "\n".join(section_low)
 
     missing = []
 
-    # (2) direct / indirect markers
+    # (1) direct / indirect markers
     direct_re = re.compile(r'direct\s*competitor|###?\s*direct\b')
     indirect_re = re.compile(r'indirect\s*competitor|###?\s*indirect\b')
     has_direct = any(direct_re.search(ln) for ln in section_low)
@@ -205,10 +165,11 @@ try:
             "competitor-list must name at least one direct and one indirect competitor." % ", ".join(missing)
         )
 
-    # (3) evidence-linking: every competitor-entry-looking line must carry (or be
-    # immediately followed by a line carrying) a citation marker. Simple,
-    # testable per-line heuristic — not full markdown parsing.
-    citation_re = re.compile(r'https?://|source:|citation|\[')
+    # (2) evidence-linking: every competitor-entry-looking line must carry (or be
+    # immediately followed by a line carrying) a citation marker. Citation-marker
+    # strictness (survey item 4): a bare `[` no longer counts — requires a real
+    # link/footnote shape.
+    citation_re = re.compile(r'https?://|source:|citation|cited|\[[^\]]+\]\([^)]+\)|\[\^[^\]]+\]')
     entry_re = re.compile(r'^\s*[-*]\s+\S|^\s*\*\*[^*]+\*\*')
 
     entry_without_citation = False
@@ -228,7 +189,8 @@ try:
     if entry_without_citation:
         deny(
             "competitor-mapping write's competitor-list section has an entry without an "
-            "evidence citation (http link, `Source:`, `citation`, or a markdown link). Per "
+            "evidence citation (http(s) link, `Source:`, `citation`/`cited`, a markdown "
+            "`[text](url)` link, or a `[^n]` footnote). Per "
             "docs/handbooks/market-analysis-norms.md (b).2, every claimed competitor fact "
             "must be backed by an evidence link — pricing page, filing, product doc. "
             "(entry-without-citation)"
