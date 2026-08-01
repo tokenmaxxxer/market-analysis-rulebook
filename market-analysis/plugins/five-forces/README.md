@@ -10,13 +10,15 @@ verdict for all five Porter forces — competitive rivalry, threat of new
 entrants, supplier bargaining power, buyer bargaining power, threat of
 substitutes — each backed by an evidence citation, not a bare rating.
 
-On a matching `Write`/`Edit`/`MultiEdit`, the gate reconstructs the resulting
-document content and checks, case-insensitively:
+On a matching `Write`/`Edit`/`MultiEdit`/`NotebookEdit`, the gate reconstructs
+the resulting document content and checks, case-insensitively:
 
 1. a `five-forces-summary` (or "five forces summary") section marker exists;
 2. all 5 force phrases are present as **distinct** substrings;
 3. each force phrase has a citation marker (`http`, `source:`, `citation`,
-   `cited`, or a markdown link `[`) within roughly 400 characters after it.
+   `cited`, or a markdown link `[text](url)`/`[^n]`) within roughly 400
+   characters after it — a bare `[` with no following `(url)` or footnote
+   marker does not count.
 
 Missing the section denies with `missing-section`; a force phrase absent
 entirely denies naming which force(s); a force present but uncited denies

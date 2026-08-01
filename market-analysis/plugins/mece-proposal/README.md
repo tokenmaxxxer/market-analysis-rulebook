@@ -30,8 +30,10 @@ Any other path is not this gate's business and is always allowed.
 
 ## Kill switch
 
-`MECE_PROPOSAL_GATE_OFF=1` (any non-empty, non-"off"-like value) disables
-the PreToolUse gate.
+`MECE_PROPOSAL_GATE_OFF=1` disables the PreToolUse gate. Only `1`, `true`,
+`yes`, or `on` (case-insensitive) are recognized as "on" — any other value,
+including empty or garbage, leaves the gate ACTIVE (fail-closed; see
+`gate_kill_switch_active` in core canon's `gate-lib.sh`).
 
 ## Ordering
 
