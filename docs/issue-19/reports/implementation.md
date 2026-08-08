@@ -1,5 +1,8 @@
 ---
-code_under_review: TBD
+code_under_review:
+  - README.md
+  - docs/handbooks/market-analysis-norms.md
+  - market-analysis/hooks/directive.sh
 loop_state: landed
 type: docs
 breaking: false
