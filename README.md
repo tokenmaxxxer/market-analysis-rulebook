@@ -9,6 +9,7 @@ generated as skeleton scaffolding by issue-170.
 - **produces**: five-forces summary, competitor list w/ evidence links, JTBD-landscape verdict
 - **write_scope**: []
 - **hand-off**: 가격 정책이 걸리면 → pricing; 포지셔닝 메시지가 걸리면 → marketing
+- **spec vocabulary** (`market-analysis.spec.json`): required deliverable fields `force`, `assessment`, `evidence` (per five-forces entry); `loop_state` values `researching, assessing, landed, evidence-undeclared, market-data-unreachable` — see `docs/handbooks/market-analysis-norms.md` (c) for the full mapping.
 
 ## Install
 

@@ -48,6 +48,40 @@ decision boundary ("경쟁 구도에서 이 스펙이 서는가") is a competiti
 a market-sizing or product-discovery task; adding those would serve a
 different role's decision, not this one's.
 
+## (c) Spec vocabulary (realized `market-analysis.spec.json`, issue-19)
+
+The realized marketplace spec's three required deliverable fields map onto
+the existing `five-forces-summary` requirement above — they are not new
+content, they are the literal field labels for what (a)/(b) already
+require:
+
+- **`force`** — one of the five Porter forces named in (b).1 (competitive
+  rivalry, threat of new entrants, supplier bargaining power, buyer
+  bargaining power, threat of substitutes).
+- **`assessment`** — the per-force verdict (low/medium/high) already
+  required by (b).1's "per-force verdict."
+- **`evidence`** — the citation already required by (b).1's "evidence
+  citation, not a bare rating" and by (b).2's "evidence link."
+
+**`loop_state` vocabulary** (spec-declared, exact five values — no stale or
+extra states):
+
+| value | meaning |
+|---|---|
+| `researching` | gathering evidence for five-forces / competitor-list / JTBD before any verdict is drafted |
+| `assessing` | verdicts drafted, evidence being cited/checked per (b) |
+| `landed` | deliverable complete and merged (terminal) |
+| `evidence-undeclared` | a claim exists with no evidence citation — blocks `landed` per (b)'s "not a bare rating" / "backed by an evidence link" requirements |
+| `market-data-unreachable` | a required source could not be reached/found; state this explicitly rather than silently omitting the force/competitor/JTBD item |
+
+**Spec fields deferred, not silently dropped:**
+
+- `reference_resolution`'s checker (`role-spec-reference-guard.sh`) lives in
+  `on-the-record`, outside this repo's write scope — this handbook can only
+  document the expectation, not gate it.
+- `recomputation`'s `checked_by: TBD` is the spec's own declared
+  follow-up, not something this rulebook closes.
+
 ## Source
 
 `docs/issue-1/proposals/methodology-and-deliverable-norms.md`,
