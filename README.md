@@ -20,6 +20,11 @@ claude plugin install market-analysis
 
 ## Layout
 
+- `playbook/*.md` — operational decision rules (condition → choice →
+  source) at practitioner depth, one file per decision axis
+  (five-forces, competitor-mapping, jtbd-fit, mece-proposal,
+  evidence-rigor), per issue #1174's operational-playbook program. Each
+  file carries a `rule_count_floor` in its front matter.
 - `market-analysis/.claude-plugin/plugin.json` — root plugin manifest
 - `market-analysis/hooks/hooks.json` — SessionStart wiring (role directive only)
 - `market-analysis/hooks/directive.sh` — SessionStart role directive
