@@ -6,6 +6,11 @@ Phase-2 record-gate plugin for the market-analysis role. Enforces the
 competitor inventory, each claimed fact backed by an evidence link
 (pricing page, filing, product doc).
 
+See `docs/handbooks/market-analysis-norms.md`'s "Tool learnings
+(issue-1199)" section (Klue entry) for why each competitor-list entry
+should state pricing, positioning, and win/loss-reason as distinct
+labeled fields.
+
 ## Write surface
 
 `PreToolUse` on `Write|Edit|MultiEdit|NotebookEdit` targeting
