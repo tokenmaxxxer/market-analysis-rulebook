@@ -82,7 +82,47 @@ extra states):
 - `recomputation`'s `checked_by: TBD` is the spec's own declared
   follow-up, not something this rulebook closes.
 
+
+## Deliverable rules (issue-1199)
+
+Checklist upgrades to the phase-1/phase-2 deliverable format. Rationale
+and adoption evidence for these rules live in the issue-1199 record
+(`on-the-record`), not here — the rules below stand on their own as
+native judgment.
+
+1. Every `competitor-list` entry states pricing, positioning, and
+   win/loss-reason as distinct labeled fields, not folded into one
+   sentence. Each direct-competitor entry also states a named
+   "differentiation opportunity" field — what this spec can do that
+   the competitor's own offering cannot — as its own checkable fact,
+   not only descriptive prose.
+2. Every citation states the date the source was read, not only the
+   URL — a source can support a true claim today and a false one
+   later, so the read-date is part of the evidence, not metadata.
+3. `five-forces-summary` verdicts:
+   - competitive-rivalry and threat-of-new-entrants verdicts cite a
+     quantified proxy metric (e.g. traffic share, revenue estimate,
+     funding count), not only a qualitative source.
+   - every force verdict carries an explicit "checked" marker distinct
+     from its narrative, so a reviewer can tell evaluated-and-low from
+     not-evaluated at a glance.
+   - when a quantified market-size or revenue figure is cited to back
+     a rivalry/buyer-power verdict, corroborate it via a second
+     independent source or derivation before citing it as established
+     (an evidence-rigor rule on numbers already in scope — it does not
+     reopen this handbook's existing TAM/SAM/SOM-out-of-scope line,
+     since no new sizing task is added).
+4. The `jtbd-landscape-verdict` cites at least two independent
+   evidence points, and separately addresses preference (why chosen)
+   and reach (how discovered/accessed) — a verdict must not conflate
+   the two.
+5. The phase-1 "Evidence plan" element names, per claim category,
+   whether primary or secondary sourcing is expected, and the minimum
+   independent-source count for each.
+
 ## Source
 
 `docs/issue-1/proposals/methodology-and-deliverable-norms.md`,
-`docs/issue-1/reports/market-analysis/scout-brief.md`.
+`docs/issue-1/reports/market-analysis/scout-brief.md`,
+`docs/issue-1199/reports/market-analysis/scout-brief.md` (in
+`on-the-record`, deliverable-rules section above).

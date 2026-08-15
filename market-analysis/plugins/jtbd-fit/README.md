@@ -6,6 +6,10 @@ the `jtbd-landscape-verdict` section must state the customer job the spec
 competes to satisfy, and whether the spec's differentiation holds against
 the strongest competing alternative for that job.
 
+See `docs/handbooks/market-analysis-norms.md`'s "Deliverable rules
+(issue-1199)" section for why the verdict cites at least two
+independent evidence points and separates preference from reach.
+
 ## Write surface
 
 `PreToolUse` on `Write|Edit|MultiEdit|NotebookEdit` targeting

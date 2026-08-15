@@ -23,6 +23,10 @@ Missing any element denies the write (exit 2) and names the missing
 element(s) by slug (e.g. `decision-framed`, `framework-selection`,
 `evidence-plan`, `adoption-rationale`, `plugin-reflection-plan`).
 
+See `docs/handbooks/market-analysis-norms.md`'s "Deliverable rules
+(issue-1199)" section for why the "Evidence plan" element names
+primary vs. secondary sourcing per claim.
+
 ## Write surface
 
 `docs/issue-<n>/proposals/*.md` (regex `^docs/issue-[0-9]+/proposals/.*\.md$`).
