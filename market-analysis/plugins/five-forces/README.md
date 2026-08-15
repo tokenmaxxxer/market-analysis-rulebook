@@ -37,6 +37,12 @@ See `docs/handbooks/market-analysis-norms.md`'s "Tool learnings
 and threat-of-new-entrants verdicts should cite a quantified proxy
 metric, not only a qualitative source.
 
+See the same handbook's "2026-08-14 plugin-ecosystem rework" section
+(`VoltAgent/awesome-claude-code-subagents` entry) for why a force
+verdict needs an explicit "checked" marker, and (`phuryn/pm-skills`
+entry) for why a market-size figure backing a verdict needs a second
+independent source or derivation.
+
 ## Write surface
 
 `docs/issue-<n>/reports/market-analysis.md` only — the phase-2 record file,

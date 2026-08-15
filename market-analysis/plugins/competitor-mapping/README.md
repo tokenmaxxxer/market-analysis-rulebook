@@ -11,6 +11,10 @@ See `docs/handbooks/market-analysis-norms.md`'s "Tool learnings
 should state pricing, positioning, and win/loss-reason as distinct
 labeled fields.
 
+See the same handbook's "2026-08-14 plugin-ecosystem rework" section
+(`phuryn/pm-skills` entry) for why each direct-competitor entry also
+needs a named "differentiation opportunity" field.
+
 ## Write surface
 
 `PreToolUse` on `Write|Edit|MultiEdit|NotebookEdit` targeting
