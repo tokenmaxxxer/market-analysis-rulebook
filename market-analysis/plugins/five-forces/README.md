@@ -32,16 +32,12 @@ of Porter's five forces into one and understating the analysis. The gate
 requires each to appear as its own separate phrase — a merged line is
 treated as **both** forces missing, not one.
 
-See `docs/handbooks/market-analysis-norms.md`'s "Tool learnings
-(issue-1199)" section (SimilarWeb entry) for why competitive-rivalry
-and threat-of-new-entrants verdicts should cite a quantified proxy
-metric, not only a qualitative source.
-
-See the same handbook's "2026-08-14 plugin-ecosystem rework" section
-(`VoltAgent/awesome-claude-code-subagents` entry) for why a force
-verdict needs an explicit "checked" marker, and (`phuryn/pm-skills`
-entry) for why a market-size figure backing a verdict needs a second
-independent source or derivation.
+See `docs/handbooks/market-analysis-norms.md`'s "Deliverable rules
+(issue-1199)" section for why competitive-rivalry and
+threat-of-new-entrants verdicts cite a quantified proxy metric, why
+every force verdict needs an explicit "checked" marker, and why a
+market-size figure backing a verdict needs a second independent
+source or derivation.
 
 ## Write surface
 

@@ -16,9 +16,9 @@ and reused rather than duplicated per framework, directly operationalizing
 issue-1's finding that evidence traceability was the single highest-leverage
 norm across both phases.
 
-See `docs/handbooks/market-analysis-norms.md`'s "Tool learnings
-(issue-1199)" section (Crayon entry) for why every citation should
-state the date the source was read, not only the URL.
+See `docs/handbooks/market-analysis-norms.md`'s "Deliverable rules
+(issue-1199)" section for why every citation states the date the
+source was read, not only the URL.
 
 ## Write surfaces gated
 

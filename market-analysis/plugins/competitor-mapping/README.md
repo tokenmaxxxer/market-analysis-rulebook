@@ -6,14 +6,11 @@ Phase-2 record-gate plugin for the market-analysis role. Enforces the
 competitor inventory, each claimed fact backed by an evidence link
 (pricing page, filing, product doc).
 
-See `docs/handbooks/market-analysis-norms.md`'s "Tool learnings
-(issue-1199)" section (Klue entry) for why each competitor-list entry
-should state pricing, positioning, and win/loss-reason as distinct
-labeled fields.
-
-See the same handbook's "2026-08-14 plugin-ecosystem rework" section
-(`phuryn/pm-skills` entry) for why each direct-competitor entry also
-needs a named "differentiation opportunity" field.
+See `docs/handbooks/market-analysis-norms.md`'s "Deliverable rules
+(issue-1199)" section for why each competitor-list entry states
+pricing, positioning, and win/loss-reason as distinct labeled fields,
+and why each direct-competitor entry also needs a named
+"differentiation opportunity" field.
 
 ## Write surface
 
